@@ -1,0 +1,12 @@
+node_modules/*
+builds/*
+release-builds/*
+./database.sqlite
+.eslintrc.json
+.git/*
+.svn/*
+.hg/*
+.DS_Store
+**/*.pyc
+.*swp
+.*swo
