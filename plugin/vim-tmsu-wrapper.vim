@@ -3,13 +3,40 @@
 "																	vim-tmsu-wrapper                         "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-let s:tmsupath = '/home/pepe/archive'
-" creates an index of my archive and opens it either in an vertical split or
-" current split
-function! OpenArchive(split)
-	execute a:split
-	execute 'read ! tmsu tags ' . s:tmsupath . '/**'
+let s:tmpfile = ""
+
+" Creates a tempory file in `/tmp` and opens that file either in the current
+" window or a vertical split, depending on the first function argument.
+" Then loads a tmsu file index (list of filenames with their tags) into that
+" file.  The path of the files of the index is supplied by the second
+" argument.
+function! OpenArchive(split, path)
+
+	" should i stay or should i split?
+	if(a:split == "vsplit")	
+		vsplit
+	endif
+
+	let l:path = shellescape(a:path)
+
+	" generate filename based on the path we are indexing
+	let l:cwdbase = system('/bin/bash', "F=".l:path." && echo ${F##*/}")
+	
+	echom "\"".l:cwdbase."\""
+	
+	let l:mktempcmd = "/tmp/tmsu-index-".trim(l:cwdbase)."-XXXXXX.md"
+
+	" create temporary file
+	let	s:tmpfile = system("mktemp \"/tmp/tmsu-index-".trim(l:cwdbase)."-XXXXXX.md\"")
+	
+	" load tmsu index into it
+	execute "edit " . s:tmpfile
+	execute 'read ! tmsu tags ' . l:path . '/**'
+	
+	" write file to make it greppable
+	execute "write"
 	execute "normal! gg"
+	
 endfunction
 
 " open file on current line with xdg-open
@@ -89,13 +116,25 @@ function! TagFile(filename, tags)
 	
 endfunction
 
+
+function! DeleteTemporaryFile()
+	let	l:res = system("rm \"".trim(s:tmpfile)."\"")
+endfunction
+
+augroup vim_tmsu_wrapper
+  autocmd!
+  autocmd BufWinLeave *tmsu-index*.md execute "call DeleteTemporaryFile()"
+augroup END
+
 execute 'command! Twrite call ApplyTagsOfSelectedLines()'
 
-" write changes to tmsu database
-vnoremap <leader>wt :<c-u> call ApplyTagsOfSelectedLines()<cr>
-" build temporary archive index and open it in a new split
-nnoremap <leader>oa :<c-u> call OpenArchive("vnew")<cr>
-" re-build temporary archive index and load it in current split
-nnoremap <leader>sa :<c-u> call OpenArchive("enew")<cr>
+" opening and loading index
+nnoremap <leader>ioa :<c-u> call OpenArchive("vsplit", '/home/pepe/archive')<cr>
+nnoremap <leader>io. :<c-u> call OpenArchive("vsplit", getcwd())<cr>
+nnoremap <leader>sia :<c-u> call OpenArchive("stay", '/home/pepe/archive')<cr>
+nnoremap <leader>si. :<c-u> call OpenArchive("stay", getcwd())<cr>
+
 " open file on current line with xdg-open
 nnoremap <leader>of :<c-u> call OpenFileFromNotesList()<cr>
+" write changes to tmsu database
+vnoremap <leader>wt :<c-u> call ApplyTagsOfSelectedLines()<cr>
