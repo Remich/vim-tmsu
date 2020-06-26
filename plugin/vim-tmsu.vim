@@ -3,12 +3,21 @@
 " Last Change: 2020 Jun 26
 " Description: A vim wrapper for tmsu.
 
+" disable loading of plugin
+if exists("g:loaded_vimtmsu")
+  finish
+endif
+
 " check for user setting of pluging dir
 if !exists("g:vimtmsu_plugin_dir")
 	echom "vim-tmsu: Error 'g:vimtmsu_plugin_dir' not set."
 	finish
 endif
-	
+
+" save user's options, for restoring at the end of the script
+let s:save_cpo = &cpo
+set cpo&vim
+
 " holds the name of the created temporary file ( `/tmp/index-PATH-XXXXXX.vtmsu` )
 let s:tmpfile = ""
 
@@ -213,3 +222,8 @@ nnoremap <leader>ts. :<c-u> call LoadFiles("stay", getcwd())<cr>
 nnoremap <leader>tof :<c-u> call OpenFileFromNotesList()<cr>
 " write changes to tmsu database
 vnoremap <leader>tw :<c-u> call ApplyTagsOfSelectedLines()<cr>
+
+
+" restore user's options
+let &cpo = s:save_cpo
+unlet s:save_cpo
