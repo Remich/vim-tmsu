@@ -27,15 +27,15 @@ function! LoadFiles(split, path)
 	endif
 
 	" generate filename based on the path we are indexing
-	let l:cwdbase			= trim(system('/bin/bash', "F=".shellescape(a:path)." && echo ${F##*/}"))
+	let l:cwdbase			= trim(system('/bin/bash', "F=".shellescape(a:path, "A")." && echo ${F##*/}"))
 	let l:tmpfilename = '/tmp/index-'.l:cwdbase.'-XXXXXX.vtmsu'
 
 	" create temporary file
-	let	s:tmpfile = trim(system("mktemp ".shellescape(l:tmpfilename)))
+	let	s:tmpfile = trim(system("mktemp ".shellescape(l:tmpfilename, "A")))
 
 	" build argument string for bash job
 	let l:args = [ s:loader, a:path, s:tmpfile, -1 ]
-	let l:args = map(l:args, "shellescape(v:val)")
+	let l:args = map(l:args, "shellescape(v:val, 'A')")
 	let l:argstr = join(l:args, " ")
 	
 	" event handling for job control
@@ -157,7 +157,7 @@ function! ApplyTagsOfLine(linenum)
 endfunction
 
 function! EscapePathAndFilename(path, filename)
-	return shellescape( a:path.a:filename )
+	return shellescape(a:path.a:filename, "A")
 endfunction
 
 " function to apply tags to file in line
@@ -173,7 +173,7 @@ function! TagFile(path, filename, tags)
 	if a:tags == []
 		let l:tags = ""
 	else
-		let l:tags = map(a:tags, 'shellescape(v:val)')
+		let l:tags = map(a:tags, "shellescape(v:val, 'A')")
 		let l:tags = join(a:tags)
 	endif
 
@@ -187,13 +187,13 @@ function! TagFile(path, filename, tags)
 
 	" tagging
 	if(l:tags != "") " not necessary, if no tags
-		execute '! tmsu tag --tags="' . l:tags .'" ' . l:file
+		execute "! tmsu tag --tags='".l:tags."' ".l:file
 	endif
 
 endfunction
 
 function! DeleteTemporaryFile()
-	let	l:res = system("rm ".shellescape(s:tmpfile))
+	let	l:res = system("rm ".shellescape(s:tmpfile, "A"))
 endfunction
 
 augroup vim_tmsu_wrapper
