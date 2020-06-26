@@ -29,7 +29,7 @@ let s:loader = stdpath("config").'/'.g:vimtmsu_plugin_dir.'/vim-tmsu/src/loader.
 " Then loads a tmsu file-index (list of filenames with their tags) into that
 " file.  The path of the folder of the index is supplied by the second
 " argument.
-function! LoadFiles(split, path)
+function! s:LoadFiles(split, path)
 	" should i stay or should i split?
 	if(a:split == "vsplit")	
 		vsplit
@@ -75,23 +75,23 @@ function! LoadFiles(split, path)
 endfunction
 
 " open file on current line with xdg-open
-function! OpenFileFromNotesList()
+function! s:OpenFileFromNotesList()
 	
 	let l:linenum  = getpos('.')[1]
-	let l:filename = GetFilename(l:linenum)
-	let l:path     = GetPath(l:linenum)
+	let l:filename = s:GetFileName(l:linenum)
+	let l:path     = s:GetPath(l:linenum)
 	
 	if l:path == 2
 		return
 	endif
 
-	let l:file = EscapePathAndFilename(l:path, l:filename)
+	let l:file = s:EscapePathAndFilename(l:path, l:filename)
 	
 	execute ":! xdg-open " . l:file
 	
 endfunction
 
-function! GetPath(linenum)
+function! s:GetPath(linenum)
 
 	" go every line up until we find a path prefix (`🗁 `)
 
@@ -122,7 +122,7 @@ function! GetPath(linenum)
 	
 endfunction
 
-function! GetFilename(linenum)
+function! s:GetFileName(linenum)
 	let l:line = getline(a:linenum)
 	let l:filename=[]
 	call substitute(l:line, '\v\/\zs.*\ze\/', '\=add(l:filename, submatch(0))', 'g')
@@ -130,50 +130,46 @@ function! GetFilename(linenum)
 endfunction
 
 " returns a list of tags
-function! GetTags(linenum)
+function! s:GetTags(linenum)
 	let l:line = getline(a:linenum)
 	let l:tags=[]
 	call substitute(l:line, '\v\<\zs.{-}\ze\>', '\=add(l:tags, submatch(0))', 'g')
 	return l:tags
 endfunction
 
-function! HelloWorld(val) 
-	return a:val
-endfunction
-
-function! ApplyTagsOfSelectedLines() 
+function! s:ApplyTagsOfSelectedLines() 
 	let l:start = getpos("'<")
 	let l:stop  = getpos("'>")
 	let l:lines = range(l:start[1], l:stop[1])
-	echo map(l:lines, 'ApplyTagsOfLine(v:val)')
+	echo map(l:lines, 's:ApplyTagsOfLine(v:val)')
 endfunction
 
-function! ApplyTagsOfLine(linenum) 
+function! s:ApplyTagsOfLine(linenum) 
 
-	let l:path = GetPath(a:linenum)
+	let l:path = s:GetPath(a:linenum)
 	if l:path == 2
 		return
 	endif
 	
-	let l:filename = GetFilename(a:linenum)
-	let l:tags     = GetTags(a:linenum)
+	let l:filename = s:GetFileName(a:linenum)
+	let l:tags     = s:GetTags(a:linenum)
 
 	" echom "path: ".l:path
 	" echom "filename: ".l:filename
 	" echo map(l:tags, 'v:val')
 	
-	call TagFile(l:path, l:filename, l:tags)
+	call s:TagFile(l:path, l:filename, l:tags)
 endfunction
 
-function! EscapePathAndFilename(path, filename)
+function! s:EscapePathAndFilename(path, filename)
 	return shellescape(a:path.a:filename, "A")
 endfunction
 
 " function to apply tags to file in line
-function! TagFile(path, filename, tags)
+function! s:TagFile(path, filename, tags)
 	
 	if(a:path == "" || a:filename == "")
-		echom "ERROR: path or filename missing as argument in `TagFile()`."
+		echom "ERROR: path or filename missing as argument in `s:TagFile()`."
 		return
 	endif
 
@@ -187,7 +183,7 @@ function! TagFile(path, filename, tags)
 	endif
 
 	" create argument string for file
-	let l:file = EscapePathAndFilename(a:path, a:filename)
+	let l:file = s:EscapePathAndFilename(a:path, a:filename)
 
 	echom "Tagging(" . l:file . ", " . l:tags . ");"
 
@@ -201,28 +197,27 @@ function! TagFile(path, filename, tags)
 
 endfunction
 
-function! DeleteTemporaryFile()
+function! s:DeleteTemporaryFile()
 	let	l:res = system("rm ".shellescape(s:tmpfile, "A"))
 endfunction
 
 augroup vim_tmsu_wrapper
 	autocmd!
-	autocmd BufWinLeave *tmsu-index*.md execute "call DeleteTemporaryFile()"
+	autocmd BufWinLeave *tmsu-index*.md execute "call s:DeleteTemporaryFile()"
 augroup END
 
-execute 'command! Twrite call ApplyTagsOfSelectedLines()'
+execute 'command! Twrite call s:ApplyTagsOfSelectedLines()'
 
 " opening and loading index
-nnoremap <leader>toa :<c-u> call LoadFiles("vsplit", '/home/pepe/archive')<cr>
-nnoremap <leader>to. :<c-u> call LoadFiles("vsplit", getcwd())<cr>
-nnoremap <leader>tsa :<c-u> call LoadFiles("stay", '/home/pepe/archive')<cr>
-nnoremap <leader>ts. :<c-u> call LoadFiles("stay", getcwd())<cr>
+nnoremap <leader>toa :<c-u> call <SID>LoadFiles("vsplit", '/home/pepe/archive')<cr>
+nnoremap <leader>to. :<c-u> call <SID>LoadFiles("vsplit", getcwd())<cr>
+nnoremap <leader>tsa :<c-u> call <SID>LoadFiles("stay", '/home/pepe/archive')<cr>
+nnoremap <leader>ts. :<c-u> call <SID>LoadFiles("stay", getcwd())<cr>
 
 " open file on current line with xdg-open
-nnoremap <leader>tof :<c-u> call OpenFileFromNotesList()<cr>
+nnoremap <leader>tof :<c-u> call <SID>OpenFileFromNotesList()<cr>
 " write changes to tmsu database
-vnoremap <leader>tw :<c-u> call ApplyTagsOfSelectedLines()<cr>
-
+vnoremap <leader>tw :<c-u> call <SID>ApplyTagsOfSelectedLines()<cr>
 
 " restore user's options
 let &cpo = s:save_cpo
