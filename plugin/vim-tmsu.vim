@@ -3,23 +3,41 @@
 " Last Change: 2020 Jun 26
 " Description: A vim wrapper for tmsu.
 
-" user config:
-let g:vimtmsu_plugin_dir = 'plugged'
-
-" name of the temporary file ( `/tmp/vtw-INDEXPATH-XXXXXX.md` )
+" check for user setting of pluging dir
+if !exists("g:vimtmsu_plugin_dir")
+	echom "vim-tmsu: Error 'g:vimtmsu_plugin_dir' not set."
+	finish
+endif
+	
+" holds the name of the created temporary file ( `/tmp/index-PATH-XXXXXX.vtmsu` )
 let s:tmpfile = ""
 
-" path to the file loader scriptvim-tmsu-wrapper-load.sh
+" path to the file loader script
 let s:loader = stdpath("config").'/'.g:vimtmsu_plugin_dir.'/vim-tmsu/src/loader.sh'
 	
 " Creates a tempory file in `/tmp` and opens that file either in the current
 " window or a vertical split, depending on the first function argument.
-" Then loads a tmsu file index (list of filenames with their tags) into that
-" file.  The path of the files of the index is supplied by the second
+" Then loads a tmsu file-index (list of filenames with their tags) into that
+" file.  The path of the folder of the index is supplied by the second
 " argument.
 function! LoadFiles(split, path)
-	echom stdpath("config")
-			
+	" should i stay or should i split?
+	if(a:split == "vsplit")	
+		vsplit
+	endif
+
+	" generate filename based on the path we are indexing
+	let l:cwdbase			= trim(system('/bin/bash', "F=".shellescape(a:path)." && echo ${F##*/}"))
+	let l:tmpfilename = '/tmp/index-'.l:cwdbase.'-XXXXXX.vtmsu'
+
+	" create temporary file
+	let	s:tmpfile = trim(system("mktemp ".shellescape(l:tmpfilename)))
+
+	" build argument string for bash job
+	let l:args = [ s:loader, a:path, s:tmpfile, -1 ]
+	let l:args = map(l:args, "shellescape(v:val)")
+	let l:argstr = join(l:args, " ")
+	
 	" event handling for job control
 	function! s:OnEvent(job_id, data, event) dict
 		if a:event == 'stdout'
@@ -27,15 +45,11 @@ function! LoadFiles(split, path)
 		elseif a:event == 'stderr'
 			let str = self.shell.' stderr: '.join(a:data)
 		else
-			execute "edit! " . s:tmpfile
 			let str = self.shell.' exited'
-			" execute "write"
-			" execute "normal! gg"
+			" job exit; open temporary file	
+			execute "edit! " . s:tmpfile
 		endif
-		
-		" call append(line('$'), str)
 		echom str
-		
 	endfunction
 
 	" job control events
@@ -44,27 +58,11 @@ function! LoadFiles(split, path)
 				\ 'on_stderr': function('s:OnEvent'),
 				\ 'on_exit': function('s:OnEvent')
 				\ }
-
 	
-
-	" should i stay or should i split?
-	if(a:split == "vsplit")	
-		vsplit
-	endif
-
-	let l:path = shellescape(a:path)
-
-	" generate filename based on the path we are indexing
-	let l:cwdbase = system('/bin/bash', "F=".l:path." && echo ${F##*/}")
-
-	" create temporary file
-	let	s:tmpfile = system("mktemp \"/tmp/tmsu-index-".trim(l:cwdbase)."-XXXXXX.md\"")
+	" call the loader, which populates the temporary file
+	let job1 = jobstart(['bash', '-c', l:argstr], extend({'shell': 'shell 1'}, s:callbacks))
 	
-	" todo proper shellescape()!
-	" call the file loader, which populates the temporary file
-	let job1 = jobstart(['bash', '-c', '"'.s:loader.'" "'.a:path.'" "'.s:tmpfile.'" -1'], extend({'shell': 'shell 1'}, s:callbacks))
 	return
-
 endfunction
 
 " open file on current line with xdg-open
@@ -150,7 +148,7 @@ function! ApplyTagsOfLine(linenum)
 	
 	let l:filename = GetFilename(a:linenum)
 	let l:tags     = GetTags(a:linenum)
-	"
+
 	" echom "path: ".l:path
 	" echom "filename: ".l:filename
 	" echo map(l:tags, 'v:val')
@@ -171,7 +169,7 @@ function! TagFile(path, filename, tags)
 	endif
 
 
-	" joining and escaping tags
+	" create argument string for tags
 	if a:tags == []
 		let l:tags = ""
 	else
@@ -179,26 +177,23 @@ function! TagFile(path, filename, tags)
 		let l:tags = join(a:tags)
 	endif
 
-	" joining path and filename and escaping
+	" create argument string for file
 	let l:file = EscapePathAndFilename(a:path, a:filename)
 
 	echom "Tagging(" . l:file . ", " . l:tags . ");"
 
 	" always clearing
-	" echom "Clearing(".l:file.")"
 	execute "! tmsu untag --all " . l:file
 
 	" tagging
-	if(l:tags != "") " do nothing if no tags
-		" echom "Applying(".l:file.")"
+	if(l:tags != "") " not necessary, if no tags
 		execute '! tmsu tag --tags="' . l:tags .'" ' . l:file
 	endif
 
 endfunction
 
-
 function! DeleteTemporaryFile()
-	let	l:res = system("rm \"".trim(s:tmpfile)."\"")
+	let	l:res = system("rm ".shellescape(s:tmpfile))
 endfunction
 
 augroup vim_tmsu_wrapper
