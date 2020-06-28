@@ -28,7 +28,7 @@ endif
 let s:tmpfile = ""
 
 " path to the file loader script
-let s:loader = stdpath("config").'/'.g:vimtmsu_plugin_dir.'/vim-tmsu/src/loader.sh'
+let s:loader = g:vimtmsu_plugin_dir.'/vim-tmsu/src/loader.sh'
 
 " Creates a tempory file in `/tmp` and opens that file either in the current
 " window or a vertical split, depending on the first function argument.
@@ -216,47 +216,53 @@ execute 'command! Twrite call s:WriteTags()'
 
 " MAPPINGS
 
-" load home directory in current window
-if !hasmapto('<Plug>VimtmsuLoadHome')
-	nmap <unique> <Leader>th	<Plug>VimtmsuLoadHome
-endif
-noremap <unique> <script> <Plug>VimtmsuLoadHome		<SID>Home
-noremap <SID>Home		:<c-u> call <SID>LoadFiles("stay", g:vimtmsu_default)<CR>
+if exists("s:vimtmsu_loaded_mappings") && s:vimtmsu_loaded_mappings == 0
 
-" load home directory in a vertical split
-if !hasmapto('<Plug>VimtmsuLoadHomeVsplit')
-	nmap <unique> <Leader>tvh	<Plug>VimtmsuLoadHomeVsplit
-endif
-noremap <unique> <script> <Plug>VimtmsuLoadHomeVsplit		<SID>HomeVsplit
-noremap <SID>HomeVsplit		:<c-u> call <SID>LoadFiles("vsplit", g:vimtmsu_default)<CR>
+	" load home directory in current window
+	if !hasmapto('<Plug>VimtmsuLoadHome')
+		nmap <unique> <Leader>th	<Plug>VimtmsuLoadHome
+	endif
+	noremap <unique> <script> <Plug>VimtmsuLoadHome		<SID>Home
+	noremap <SID>Home		:<c-u> call <SID>LoadFiles("stay", g:vimtmsu_default)<CR>
 
-" load current working directory in current window
-if !hasmapto('<Plug>VimtmsuLoadCwd')
-	nmap <unique> <Leader>t.	<Plug>VimtmsuLoadCwd
-endif
-noremap <unique> <script> <Plug>VimtmsuLoadCwd		<SID>Cwd
-noremap <SID>Cwd		:<c-u> call <SID>LoadFiles("stay", getcwd())<CR>
+	" load home directory in a vertical split
+	if !hasmapto('<Plug>VimtmsuLoadHomeVsplit')
+		nmap <unique> <Leader>tvh	<Plug>VimtmsuLoadHomeVsplit
+	endif
+	noremap <unique> <script> <Plug>VimtmsuLoadHomeVsplit		<SID>HomeVsplit
+	noremap <SID>HomeVsplit		:<c-u> call <SID>LoadFiles("vsplit", g:vimtmsu_default)<CR>
 
-" load current working directory in a vertical split
-if !hasmapto('<Plug>VimtmsuLoadCwdVsplit')
-	nmap <unique> <Leader>tv.	<Plug>VimtmsuLoadCwdVsplit
-endif
-noremap <unique> <script> <Plug>VimtmsuLoadCwdVsplit		<SID>CwdVsplit
-noremap <SID>CwdVsplit		:<c-u> call <SID>LoadFiles("vsplit", getcwd())<CR>
+	" load current working directory in current window
+	if !hasmapto('<Plug>VimtmsuLoadCwd')
+		nmap <unique> <Leader>t.	<Plug>VimtmsuLoadCwd
+	endif
+	noremap <unique> <script> <Plug>VimtmsuLoadCwd		<SID>Cwd
+	noremap <SID>Cwd		:<c-u> call <SID>LoadFiles("stay", getcwd())<CR>
 
-" open file on current line with xdg-open
-if !hasmapto('<Plug>VimtmsuOpenFile')
-	nmap <unique> <Leader>to	<Plug>VimtmsuOpenFile
-endif
-noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
-noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
+	" load current working directory in a vertical split
+	if !hasmapto('<Plug>VimtmsuLoadCwdVsplit')
+		nmap <unique> <Leader>tv.	<Plug>VimtmsuLoadCwdVsplit
+	endif
+	noremap <unique> <script> <Plug>VimtmsuLoadCwdVsplit		<SID>CwdVsplit
+	noremap <SID>CwdVsplit		:<c-u> call <SID>LoadFiles("vsplit", getcwd())<CR>
 
-" write changes of selected lines to tmsu database
-if !hasmapto('<Plug>VimtmsuWriteTags')
-	vmap <unique> <Leader>tw	<Plug>VimtmsuWriteTags
+	" open file on current line with xdg-open
+	if !hasmapto('<Plug>VimtmsuOpenFile')
+		nmap <unique> <Leader>to	<Plug>VimtmsuOpenFile
+	endif
+	noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
+	noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
+
+	" write changes of selected lines to tmsu database
+	if !hasmapto('<Plug>VimtmsuWriteTags')
+		vmap <unique> <Leader>tw	<Plug>VimtmsuWriteTags
+	endif
+	noremap <unique> <script> <Plug>VimtmsuWriteTags		<SID>Write
+	noremap <SID>Write		:<c-u> call <SID>WriteTags()<CR>
+
+	let s:vimtmsu_loaded_mappings = 1
+
 endif
-noremap <unique> <script> <Plug>VimtmsuWriteTags		<SID>Write
-noremap <SID>Write		:<c-u> call <SID>WriteTags()<CR>
 	
 
 " restore user's options
