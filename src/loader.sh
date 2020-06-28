@@ -24,10 +24,10 @@ leveloffset="$3"
 # notify-send "path: $path"
 
 files=()
-mapfile -d $'\0' files < <(find "$path" -maxdepth 1 -mindepth 1 -type f -not -name '.*' -print0)
+mapfile -d $'\0' files < <(find -L "$path" -maxdepth 1 -mindepth 1 -type f -not -name '.*' -print0)
 
 directories=()
-mapfile -d $'\0' directories < <(find "$path" -maxdepth 1 -mindepth 1 -type d -not -name '.*' -print0)
+mapfile -d $'\0' directories < <(find -L "$path" -maxdepth 1 -mindepth 1 -type d -not -name '.*' -print0)
 
 readarray -t filesSorted < <(for a in "${files[@]}"; do echo "$a"; done | sort)
 readarray -t directoriesSorted < <(for a in "${directories[@]}"; do echo "$a"; done | sort)
@@ -38,9 +38,7 @@ level=$( expr $level - 1 )
 
 # initialise offset of padding
 if [[ $leveloffset -eq -1 ]]; then
-	echo $leveloffset
 	leveloffset=$level
-	echo $leveloffset
 fi
 
 # calculate current level
