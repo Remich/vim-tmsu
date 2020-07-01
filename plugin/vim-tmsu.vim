@@ -24,9 +24,6 @@ if !exists("g:vimtmsu_default") || g:vimtmsu_default == ""
 	let g:vimtmsu_default = getcwd()
 endif
 
-" flag for loading of mappings; don't load them twice
-let s:vimtmsu_loaded_mappings = 0
-
 " holds the name of the created temporary file ( `/tmp/index-PATH-XXXXXX.vtmsu` )
 let s:tmpfile = ""
 
@@ -219,7 +216,7 @@ execute 'command! Twrite call s:WriteTags()'
 
 " MAPPINGS
 
-if exists("s:vimtmsu_loaded_mappings") && s:vimtmsu_loaded_mappings == 0
+if exists("g:vimtmsu_loaded_mappings") == v:false
 
 	" load home directory in current window
 	if !hasmapto('<Plug>VimtmsuLoadHome')
@@ -263,7 +260,7 @@ if exists("s:vimtmsu_loaded_mappings") && s:vimtmsu_loaded_mappings == 0
 	noremap <unique> <script> <Plug>VimtmsuWriteTags		<SID>Write
 	noremap <SID>Write		:<c-u> call <SID>WriteTags()<CR>
 
-	let s:vimtmsu_loaded_mappings = 1
+	let g:vimtmsu_loaded_mappings = 1
 
 endif
 	
