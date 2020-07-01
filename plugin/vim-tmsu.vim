@@ -24,6 +24,9 @@ if !exists("g:vimtmsu_default") || g:vimtmsu_default == ""
 	let g:vimtmsu_default = getcwd()
 endif
 
+" flag for loading of mappings; don't load them twice
+let s:vimtmsu_loaded_mappings = 0
+
 " holds the name of the created temporary file ( `/tmp/index-PATH-XXXXXX.vtmsu` )
 let s:tmpfile = ""
 
