@@ -236,17 +236,18 @@ function! s:TagFile(path, filename, tags)
 endfunction
 
 function! s:DeleteTemporaryFile()
+	echom "removing". s:tmpfile
 	let	l:res = system("rm ".shellescape(s:tmpfile, "A"))
 endfunction
 
 augroup vim_tmsu_wrapper
 	autocmd!
-	autocmd BufWinLeave *tmsu-index*.md execute "call s:DeleteTemporaryFile()"
+	autocmd BufWinLeave /tmp/index*.vtmsu execute "call s:DeleteTemporaryFile()"
 augroup END
 
-execute 'command! Twrite call s:WriteTags()'
-
-" MAPPINGS
+" ============
+" = MAPPINGS =
+" ============
 
 if exists("g:vimtmsu_loaded_mappings") == v:false
 
@@ -287,7 +288,7 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 
 	" open file on current line with xdg-open
 	if !hasmapto('<Plug>VimtmsuOpenFile')
-		nmap <unique> <Leader>of	<Plug>VimtmsuOpenFile
+		nmap <unique> gx	<Plug>VimtmsuOpenFile
 	endif
 	noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
 	noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
