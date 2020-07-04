@@ -83,22 +83,34 @@ endfunction
 " open file on current line with xdg-open
 function! s:OpenFile()
 	
-	let l:linenum  = getpos('.')[1]
-	let l:filename = s:GetFileName(l:linenum)
-	let l:path     = s:GetPath(l:linenum)
+	let l:linenum     = getpos('.')[1]
 	
+	let l:path        = s:GetPath(l:linenum)
 	if l:path == 2
 		return
 	endif
+	
+	let l:pathlinenum = s:GetPathLineNum(l:linenum)
+	
+	" check if the current line points to a directory
+	if l:linenum == l:pathlinenum
+		echom "yes, current line is a directory"
+		echom l:path
+		let l:file = s:EscapePath(l:path)
+	else
+		echom "no, current line is a file"
+		let l:filename = s:GetFileName(l:linenum)
+		let l:file = s:EscapePathAndFilename(l:path, l:filename)
+	endif
 
-	let l:file = s:EscapePathAndFilename(l:path, l:filename)
+	echom "l:file: ".l:file
 	
 	execute ":! xdg-open " . l:file
 	
 endfunction
 
-function! s:GetPath(linenum)
-
+function! s:GetPathLineNum(linenum)
+	
 	" go every line up until we find a path prefix (`🗁 `)
 
 	let l:found = 0
@@ -121,6 +133,13 @@ function! s:GetPath(linenum)
 	
 	endwhile
 
+	return l:curlinenum
+	
+endfunction
+
+function! s:GetPath(linenum)
+
+	let l:line = getline(s:GetPathLineNum(a:linenum))
 	" extract path from line
 	let l:path=[]
 	call substitute(l:line, '\v\/.*\/', '\=add(l:path, submatch(0))', 'g')
@@ -170,6 +189,11 @@ endfunction
 function! s:EscapePathAndFilename(path, filename)
 	return shellescape(a:path.a:filename, "A")
 endfunction
+
+function! s:EscapePath(path)
+	return shellescape(a:path, "A")
+endfunction
+
 
 " function to apply tags to file in line
 function! s:TagFile(path, filename, tags)
@@ -248,7 +272,7 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 
 	" open file on current line with xdg-open
 	if !hasmapto('<Plug>VimtmsuOpenFile')
-		nmap <unique> <Leader>to	<Plug>VimtmsuOpenFile
+		nmap <unique> <Leader>of	<Plug>VimtmsuOpenFile
 	endif
 	noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
 	noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
