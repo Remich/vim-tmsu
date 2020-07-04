@@ -80,8 +80,9 @@ function! s:LoadFiles(split, path)
 	return
 endfunction
 
-" open file on current line with xdg-open
-function! s:OpenFile()
+" returns the full filename / directoryname of the current line
+" already shellescaped
+function! s:GetFullFilename()
 	
 	let l:linenum     = getpos('.')[1]
 	
@@ -94,19 +95,31 @@ function! s:OpenFile()
 	
 	" check if the current line points to a directory
 	if l:linenum == l:pathlinenum
-		echom "yes, current line is a directory"
-		echom l:path
-		let l:file = s:EscapePath(l:path)
+		return l:path
 	else
-		echom "no, current line is a file"
 		let l:filename = s:GetFileName(l:linenum)
-		let l:file = s:EscapePathAndFilename(l:path, l:filename)
+		return l:path.l:filename
 	endif
+	
+endfunction
 
+" open file/directory of current line with xdg-open
+function! s:OpenFile()
+
+	let l:file = s:GetFullFilename()
+	echom l:file
 	echom "l:file: ".l:file
+	execute ":! xdg-open " . shellescape(l:file, "A")
 	
-	execute ":! xdg-open " . l:file
+endfunction
+
+" open file/directory of current line with vim (re-implementation of `gf`)
+function! s:GoFile()
 	
+	let l:file = s:GetFullFilename()
+	echom "l:file: ".l:file
+	echom "going file"
+	execute "edit! " . l:file
 endfunction
 
 function! s:GetPathLineNum(linenum)
@@ -190,11 +203,6 @@ function! s:EscapePathAndFilename(path, filename)
 	return shellescape(a:path.a:filename, "A")
 endfunction
 
-function! s:EscapePath(path)
-	return shellescape(a:path, "A")
-endfunction
-
-
 " function to apply tags to file in line
 function! s:TagFile(path, filename, tags)
 	
@@ -270,19 +278,26 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 	noremap <unique> <script> <Plug>VimtmsuLoadCwdVsplit		<SID>CwdVsplit
 	noremap <SID>CwdVsplit		:<c-u> call <SID>LoadFiles("vsplit", getcwd())<CR>
 
-	" open file on current line with xdg-open
-	if !hasmapto('<Plug>VimtmsuOpenFile')
-		nmap <unique> <Leader>of	<Plug>VimtmsuOpenFile
-	endif
-	noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
-	noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
-
 	" write changes of selected lines to tmsu database
 	if !hasmapto('<Plug>VimtmsuWriteTags')
 		vmap <unique> <Leader>tw	<Plug>VimtmsuWriteTags
 	endif
 	noremap <unique> <script> <Plug>VimtmsuWriteTags		<SID>Write
 	noremap <SID>Write		:<c-u> call <SID>WriteTags()<CR>
+
+	" open file on current line with xdg-open
+	if !hasmapto('<Plug>VimtmsuOpenFile')
+		nmap <unique> <Leader>of	<Plug>VimtmsuOpenFile
+	endif
+	noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
+	noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
+	
+	" reimplementation of `gf`
+	if !hasmapto('<Plug>VimtmsuGoFile')
+		nmap <unique> gf	<Plug>VimtmsuGoFile
+	endif
+	noremap <unique> <script> <Plug>VimtmsuGoFile		<SID>Go
+	noremap <SID>Go		:<c-u> call <SID>GoFile()<CR>
 
 	let g:vimtmsu_loaded_mappings = 1
 
