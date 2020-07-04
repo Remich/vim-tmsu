@@ -50,22 +50,36 @@ for(( c=0; c<level; c++ )); do
 	padding="$padding  "
 done
 
-# echo path
-# TODO collect tags of path
-echo "$padding$dprefix$path/" >> $tmpfile
+# get, parse and nicen tags of path
+tags=""
+# are there any tags for the current directory?
+if [[ $(tmsu tags -c --name never "$path") -ne 0 ]];then
+	# yes, get them	
+	tags="$(tmsu tags --name never -1 "$path" )"
+	# wrap each tag (`<TAG>`); replace newlines with spaces;
+	tags="<"$(echo "$tags" | sed -e 's/\\ / /g' | sed -e ':a;N;$!ba;s/\n/> </g')">"
+else
+	tags=""
+fi
+
+# append current directory with it's tags
+echo "$padding$dprefix$path/ $tags" >> $tmpfile
 	
 for f in "${filesSorted[@]}"; do
 	
-	# parse and nicen tags
+	# get, parse and nicen tags of f
 	tags=""
+	# are there any tags for the current file?
 	if [[ $(tmsu tags -c --name never "$f") -ne 0 ]];then
-		tags="$tags$(tmsu tags --name never -1 "$f" )"
+		# yes, get them
+		tags="$(tmsu tags --name never -1 "$f" )"
+		# wrap each tag (`<TAG>`); replace newlines with spaces;
 		tags="<"$(echo "$tags" | sed -e 's/\\ / /g' | sed -e ':a;N;$!ba;s/\n/> </g')">"
 	else
 		tags=""
 	fi
 	
-	# echo files with tags
+	# append current file with it's tags
 	echo "$padding  $fprefix/"$(basename "$f")"/ $tags" >> $tmpfile
 done
 

@@ -82,22 +82,20 @@ endfunction
 
 " returns the full filename / directoryname of the current line
 " already shellescaped
-function! s:GetFullFilename()
+function! s:GetFullFilename(linenum)
 	
-	let l:linenum     = getpos('.')[1]
-	
-	let l:path        = s:GetPath(l:linenum)
+	let l:path = s:GetPath(a:linenum)
 	if l:path == 2
 		return
 	endif
 	
-	let l:pathlinenum = s:GetPathLineNum(l:linenum)
+	let l:pathlinenum = s:GetPathLineNum(a:linenum)
 	
 	" check if the current line points to a directory
-	if l:linenum == l:pathlinenum
+	if a:linenum == l:pathlinenum
 		return l:path
 	else
-		let l:filename = s:GetFileName(l:linenum)
+		let l:filename = s:GetFileName(a:linenum)
 		return l:path.l:filename
 	endif
 	
@@ -106,9 +104,9 @@ endfunction
 " open file/directory of current line with xdg-open
 function! s:OpenFile()
 
-	let l:file = s:GetFullFilename()
-	echom l:file
-	echom "l:file: ".l:file
+	let l:linenum = getpos('.')[1]
+	let l:file    = s:GetFullFilename(l:linenum)
+	echom "Opening file: ".l:file
 	execute ":! xdg-open " . shellescape(l:file, "A")
 	
 endfunction
@@ -116,9 +114,9 @@ endfunction
 " open file/directory of current line with vim (re-implementation of `gf`)
 function! s:GoFile()
 	
-	let l:file = s:GetFullFilename()
-	echom "l:file: ".l:file
-	echom "going file"
+	let l:linenum = getpos('.')[1]
+	let l:file    = s:GetFullFilename(l:linenum)
+	echom "Going file: ".l:file
 	execute "edit! " . l:file
 endfunction
 
@@ -184,19 +182,10 @@ endfunction
 
 function! s:ApplyTagsOfLine(linenum) 
 
-	let l:path = s:GetPath(a:linenum)
-	if l:path == 2
-		return
-	endif
+	let l:tags = s:GetTags(a:linenum)
+	let l:file = s:GetFullFilename(a:linenum)
 	
-	let l:filename = s:GetFileName(a:linenum)
-	let l:tags     = s:GetTags(a:linenum)
-
-	" echom "path: ".l:path
-	" echom "filename: ".l:filename
-	" echo map(l:tags, 'v:val')
-	
-	call s:TagFile(l:path, l:filename, l:tags)
+	call s:TagFile(l:file, l:tags)
 endfunction
 
 function! s:EscapePathAndFilename(path, filename)
@@ -204,13 +193,12 @@ function! s:EscapePathAndFilename(path, filename)
 endfunction
 
 " function to apply tags to file in line
-function! s:TagFile(path, filename, tags)
+function! s:TagFile(file, tags)
 	
 	if(a:path == "" || a:filename == "")
 		echom "ERROR: path or filename missing as argument in `s:TagFile()`."
 		return
 	endif
-
 
 	" create argument string for tags
 	if a:tags == []
@@ -220,17 +208,14 @@ function! s:TagFile(path, filename, tags)
 		let l:tags = join(a:tags)
 	endif
 
-	" create argument string for file
-	let l:file = s:EscapePathAndFilename(a:path, a:filename)
-
-	echom "Tagging(" . l:file . ", " . l:tags . ");"
+	echom "Tagging(" . a:file . ", " . l:tags . ");"
 
 	" always clearing
-	execute "! tmsu untag --all " . l:file
+	execute "! tmsu untag --all " . a:file
 
 	" tagging
 	if(l:tags != "") " not necessary, if no tags
-		execute "! tmsu tag --tags='".l:tags."' ".l:file
+		execute "! tmsu tag --tags='".l:tags."' ".a:file
 	endif
 
 endfunction
@@ -239,6 +224,10 @@ function! s:DeleteTemporaryFile()
 	echom "removing". s:tmpfile
 	let	l:res = system("rm ".shellescape(s:tmpfile, "A"))
 endfunction
+
+" ================
+" = AUTOCOMMANDS =
+" ================
 
 augroup vim_tmsu_wrapper
 	autocmd!
