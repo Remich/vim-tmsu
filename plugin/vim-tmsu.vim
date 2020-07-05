@@ -48,12 +48,22 @@ function! s:Error(msg)
 endfunction
 
 " Calls the file loader (`src/loader.sh`) using Neovim's Job Control.
-" Decides where to create the file the data gets loaded into.
+" Decides where to create the file the data gets written to.
 " Opens that file in the current window or a vertical split, depending on
-" `a:split`.
+" the parameter `a:split`.
 function! s:LoadFiles(split, path)
-
+	
 	call s:Message("LoadFiles(".a:split.", ".a:path.")")	
+
+	" Sanitize `a:path`:
+
+	" a) Remove trailing `/`.
+	let l:path = substitute(a:path, '\v\/*$', '', 'g')
+
+	" b) Replace `.` with absolute path of current working directory.
+	if l:path == "." || l:path == ""
+		let l:path = getcwd()
+	endif
 	
 	" Should i stay or should i split?
 	if(a:split == "vsplit")	
@@ -63,19 +73,19 @@ function! s:LoadFiles(split, path)
 	" Check if we should use a persistent index file or a temporary file.
 	if g:vimtmsu_persistent_index_files == 0
 		" Generate filename based on the path we are indexing.
-		let l:cwdbase			= trim(system('/bin/bash', "F=".shellescape(a:path, "A")." && echo ${F##*/}"))
+		let l:cwdbase			= trim(system('/bin/bash', "F=".shellescape(l:path, "A")." && echo ${F##*/}"))
 		let l:tmpfilename = '/tmp/index-'.l:cwdbase.'-XXXXXX.vtmsu'
 		" Create temporary file.
 		let	s:filename = trim(system("mktemp ".shellescape(l:tmpfilename, "A")))
 	else
-		let s:filename = "index.vtmsu"	
+		let s:filename = l:path."/index.vtmsu"	
+		echom "s:filename: ".s:filename
 		" Delete old file.
 		call system("rm ".shellescape(s:filename, "A"))
 	endif
 
-
 	" Build argument string for bash job.
-	let l:args = [ s:loader, a:path, s:filename, -1 ]
+	let l:args = [ s:loader, l:path, s:filename, -1 ]
 	let l:args = map(l:args, "shellescape(v:val, 'A')")
 	let l:argstr = join(l:args, " ")
 	
@@ -245,8 +255,15 @@ function! s:TagFile(file, tags)
 
 endfunction
 
+
+" ===============
+" = Ex Commands =
+" ===============
+
+command! -nargs=? VTLoad :call s:LoadFiles("stay", <q-args>)
+
 " ================
-" = AUTOCOMMANDS =
+" = Autocommands =
 " ================
 
 " Deletes the temporary file.
@@ -286,14 +303,14 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 
 	" Load default directory in current window.
 	if !hasmapto('<Plug>VimtmsuLoadDefault')
-		nmap <unique> <Leader>th	<Plug>VimtmsuLoadDefault
+		nmap <unique> <Leader>td	<Plug>VimtmsuLoadDefault
 	endif
 	noremap <unique> <script> <Plug>VimtmsuLoadDefault		<SID>Default
 	noremap <SID>Default	:<c-u> call <SID>LoadFiles("stay", g:vimtmsu_default)<CR>
 
 	" Load default directory in a vertical split.
 	if !hasmapto('<Plug>VimtmsuLoadDefaultVsplit')
-		nmap <unique> <Leader>tvh	<Plug>VimtmsuLoadDefaultVsplit
+		nmap <unique> <Leader>tvd	<Plug>VimtmsuLoadDefaultVsplit
 	endif
 	noremap <unique> <script> <Plug>VimtmsuLoadDefaultVsplit		<SID>DefaultVsplit
 	noremap <SID>DefaultVsplit	:<c-u> call <SID>LoadFiles("vsplit", g:vimtmsu_default)<CR>
