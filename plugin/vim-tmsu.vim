@@ -18,17 +18,11 @@ if !exists("g:vimtmsu_plugin_dir")
 	finish
 endif
 
-" Check for user setting of default folder.
-" If none is set or empty use the current working directory.
-if !exists("g:vimtmsu_default") || g:vimtmsu_default == ""
-	let g:vimtmsu_default = getcwd()
-endif
-
 " Check for user setting for creating a 'index.vtmsu' in the current working directory.
 " Otherwise create temporary files in '/tmp'.
 if !exists("g:vimtmsu_persistent_index_files")
 	let g:vimtmsu_persistent_index_files = 0
-endif
+edif
 
 " Holds the name of the created file.
 " If we are using temporary files it has the form: `/tmp/index-PATH-XXXXXX.vtmsu`.
@@ -300,20 +294,6 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 	
 	noremap <unique> <script> <Plug>VimtmsuGoFile		<SID>Go
 	noremap <SID>Go		:<c-u> call <SID>GoFile()<CR>
-
-	" Load default directory in current window.
-	if !hasmapto('<Plug>VimtmsuLoadDefault')
-		nmap <unique> <Leader>td	<Plug>VimtmsuLoadDefault
-	endif
-	noremap <unique> <script> <Plug>VimtmsuLoadDefault		<SID>Default
-	noremap <SID>Default	:<c-u> call <SID>LoadFiles("stay", g:vimtmsu_default)<CR>
-
-	" Load default directory in a vertical split.
-	if !hasmapto('<Plug>VimtmsuLoadDefaultVsplit')
-		nmap <unique> <Leader>tvd	<Plug>VimtmsuLoadDefaultVsplit
-	endif
-	noremap <unique> <script> <Plug>VimtmsuLoadDefaultVsplit		<SID>DefaultVsplit
-	noremap <SID>DefaultVsplit	:<c-u> call <SID>LoadFiles("vsplit", g:vimtmsu_default)<CR>
 
 	" Load current working directory in current window.
 	if !hasmapto('<Plug>VimtmsuLoadCwd')
