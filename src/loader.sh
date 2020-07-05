@@ -21,12 +21,11 @@ fprefix='- '
 path="$1"
 tmpfile="$2"
 leveloffset="$3"
-# notify-send "path: $path"
 
 files=()
 mapfile -d $'\0' files < <(find -L "$path" -maxdepth 1 -mindepth 1 -type f -not -name '.*' -print0)
 
-directories=()
+irectories=()
 mapfile -d $'\0' directories < <(find -L "$path" -maxdepth 1 -mindepth 1 -type d -not -name '.*' -print0)
 
 readarray -t filesSorted < <(for a in "${files[@]}"; do echo "$a"; done | sort)
