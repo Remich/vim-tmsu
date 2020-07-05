@@ -24,6 +24,12 @@ if !exists("g:vimtmsu_default") || g:vimtmsu_default == ""
 	let g:vimtmsu_default = getcwd()
 endif
 
+" Check for user setting for creating a 'index.vtmsu' in the current working directory.
+" Otherwise create temporary files in '/tmp'
+if !exists("g:vimtmsu_persistent_index_files")
+	let g:vimtmsu_persistent_index_files = 0
+endif
+
 " holds the name of the created temporary file ( `/tmp/index-PATH-XXXXXX.vtmsu` )
 let s:tmpfile = ""
 
@@ -41,15 +47,22 @@ function! s:LoadFiles(split, path)
 		vsplit
 	endif
 
-	" generate filename based on the path we are indexing
-	let l:cwdbase			= trim(system('/bin/bash', "F=".shellescape(a:path, "A")." && echo ${F##*/}"))
-	let l:tmpfilename = '/tmp/index-'.l:cwdbase.'-XXXXXX.vtmsu'
+	" check if use a persistent index file or a temporary file
+	if g:vimtmsu_persistent_index_files == 0
+		" generate filename based on the path we are indexing
+		let l:cwdbase			= trim(system('/bin/bash', "F=".shellescape(a:path, "A")." && echo ${F##*/}"))
+		let l:tmpfilename = '/tmp/index-'.l:cwdbase.'-XXXXXX.vtmsu'
+		" create temporary file
+		let	s:filename = trim(system("mktemp ".shellescape(l:tmpfilename, "A")))
+	else
+		let s:filename = "index.vtmsu"	
+		" delete old file
+		call system("rm ".shellescape(s:filename, "A"))
+	endif
 
-	" create temporary file
-	let	s:tmpfile = trim(system("mktemp ".shellescape(l:tmpfilename, "A")))
 
 	" build argument string for bash job
-	let l:args = [ s:loader, a:path, s:tmpfile, -1 ]
+	let l:args = [ s:loader, a:path, s:filename, -1 ]
 	let l:args = map(l:args, "shellescape(v:val, 'A')")
 	let l:argstr = join(l:args, " ")
 	
@@ -61,8 +74,8 @@ function! s:LoadFiles(split, path)
 			let str = self.shell.' stderr: '.join(a:data)
 		else
 			let str = self.shell.' exited'
-			" job exit; open temporary file	
-			execute "edit! " . s:tmpfile
+			" job exit; open file	in vim
+			execute "edit! " . s:filename
 		endif
 		echom str
 	endfunction
