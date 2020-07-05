@@ -2,87 +2,92 @@
 
 # File: loader.sh
 # Author: René Michalke <rene@renemichalke.de>
-# Last Change: 2020 Jun 26
-# Description: A vim wrapper for tmsu.
+# Description: Loads recursively all files and directories with their tmsu tags into a .vtmsu file.
 
-# check for correct number of arguments
+# Check for correct number of arguments.
 if [[ $# -ne 3 ]]; then
 	( >&2 echo "ERROR: Wrong number of arguments in $(basename $0).
 Usage: $(basename $0) PATH TMPFILE LEVEL" )
 	exit 1
 fi
 
-dprefix='📂 '
+# Don't change them, as they are also hardcoded in `plugin/vim-tmsu.vim`.
+# Prepend all directories with:
 dprefix='🗁  '
-fprefix='🔹'
-fprefix='📝 '
+# Prepend all files with:
 fprefix='- '
 
+# Holds the fullname of the current directory.
 path="$1"
+# Holds the name of the index-file.
 tmpfile="$2"
+# Holds the padding-offset.
 leveloffset="$3"
 
+# Load the files located in `$path`.
 files=()
 mapfile -d $'\0' files < <(find -L "$path" -maxdepth 1 -mindepth 1 -type f -not -name '.*' -print0)
 
-irectories=()
+# Load the directories located in `$path`.
+directories=()
 mapfile -d $'\0' directories < <(find -L "$path" -maxdepth 1 -mindepth 1 -type d -not -name '.*' -print0)
 
+# Sort by filename/directoryname.
 readarray -t filesSorted < <(for a in "${files[@]}"; do echo "$a"; done | sort)
 readarray -t directoriesSorted < <(for a in "${directories[@]}"; do echo "$a"; done | sort)
 
-# count the number of parent directories
+# Count the number of parent directories.
 level=$( echo $path | tr '/' '\n' | wc -l)
 level=$( expr $level - 1 )
 
-# initialise offset of padding
+# Initialise offset of padding.
 if [[ $leveloffset -eq -1 ]]; then
 	leveloffset=$level
 fi
 
-# calculate current level
+# Calculate current level of recursion.
 level=$((level - leveloffset))
 
-# calculate padding
+# Calculate padding.
 padding=""
 for(( c=0; c<level; c++ )); do
 	padding="$padding  "
 done
 
-# get, parse and nicen tags of path
+# Get, parse and nicen tags of directory stored in `$path`.
 tags=""
-# are there any tags for the current directory?
+# Are there any tags?
 if [[ $(tmsu tags -c --name never "$path") -ne 0 ]];then
-	# yes, get them	
+	# Yes: Get them.
 	tags="$(tmsu tags --name never -1 "$path" )"
-	# wrap each tag (`<TAG>`); replace newlines with spaces;
+	# Wrap each tag like this: `<TAG>`. Replace newlines with spaces.
 	tags="<"$(echo "$tags" | sed -e 's/\\ / /g' | sed -e ':a;N;$!ba;s/\n/> </g')">"
 else
 	tags=""
 fi
 
-# append current directory with it's tags
+# Append results to the file.
 echo "$padding$dprefix$path/ $tags" >> $tmpfile
 	
 for f in "${filesSorted[@]}"; do
 	
-	# get, parse and nicen tags of f
+	# Get, parse and nicen tags of file stored in `$f`.
 	tags=""
-	# are there any tags for the current file?
+	# Are there any tags?
 	if [[ $(tmsu tags -c --name never "$f") -ne 0 ]];then
-		# yes, get them
+		# Yes: Get them.
 		tags="$(tmsu tags --name never -1 "$f" )"
-		# wrap each tag (`<TAG>`); replace newlines with spaces;
+		# Wrap each tag like this: `<TAG>`. Replace newlines with spaces.
 		tags="<"$(echo "$tags" | sed -e 's/\\ / /g' | sed -e ':a;N;$!ba;s/\n/> </g')">"
 	else
 		tags=""
 	fi
 	
-	# append current file with it's tags
+	# Append results to the file.
 	echo "$padding  $fprefix/"$(basename "$f")"/ $tags" >> $tmpfile
 done
 
-# recurse
+# Recurse.
 for d in "${directoriesSorted[@]}"; do
 	$0 "$path/$(basename "$d")" "$tmpfile" "$leveloffset"
 done
