@@ -18,7 +18,7 @@ if !exists("g:vimtmsu_plugin_dir")
 	finish
 endif
 
-" Check for user setting of home folder.
+" Check for user setting of default folder.
 " If none is set or empty use the current working directory.
 if !exists("g:vimtmsu_default") || g:vimtmsu_default == ""
 	let g:vimtmsu_default = getcwd()
@@ -272,19 +272,19 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 	noremap <unique> <script> <Plug>VimtmsuGoFile		<SID>Go
 	noremap <SID>Go		:<c-u> call <SID>GoFile()<CR>
 
-	" Load home directory in current window.
-	if !hasmapto('<Plug>VimtmsuLoadHome')
-		nmap <unique> <Leader>th	<Plug>VimtmsuLoadHome
+	" Load default directory in current window.
+	if !hasmapto('<Plug>VimtmsuLoadDefault')
+		nmap <unique> <Leader>th	<Plug>VimtmsuLoadDefault
 	endif
-	noremap <unique> <script> <Plug>VimtmsuLoadHome		<SID>Home
-	noremap <SID>Home		:<c-u> call <SID>LoadFiles("stay", g:vimtmsu_default)<CR>
+	noremap <unique> <script> <Plug>VimtmsuLoadDefault		<SID>Default
+	noremap <SID>Default	:<c-u> call <SID>LoadFiles("stay", g:vimtmsu_default)<CR>
 
-	" Load home directory in aLvertical split.
-	if !hasmapto('<Plug>VimtmsuLoadHomeVsplit')
-		nmap <unique> <Leader>tvh	<Plug>VimtmsuLoadHomeVsplit
+	" Load default directory in a vertical split.
+	if !hasmapto('<Plug>VimtmsuLoadDefaultVsplit')
+		nmap <unique> <Leader>tvh	<Plug>VimtmsuLoadDefaultVsplit
 	endif
-	noremap <unique> <script> <Plug>VimtmsuLoadHomeVsplit		<SID>HomeVsplit
-	noremap <SID>HomeVsplit		:<c-u> call <SID>LoadFiles("vsplit", g:vimtmsu_default)<CR>
+	noremap <unique> <script> <Plug>VimtmsuLoadDefaultVsplit		<SID>DefaultVsplit
+	noremap <SID>DefaultVsplit	:<c-u> call <SID>LoadFiles("vsplit", g:vimtmsu_default)<CR>
 
 	" Load current working directory in current window.
 	if !hasmapto('<Plug>VimtmsuLoadCwd')
