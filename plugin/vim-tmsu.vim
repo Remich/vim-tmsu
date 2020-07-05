@@ -22,7 +22,7 @@ endif
 " Otherwise create temporary files in '/tmp'.
 if !exists("g:vimtmsu_persistent_index_files")
 	let g:vimtmsu_persistent_index_files = 0
-edif
+endif
 
 " Holds the name of the created file.
 " If we are using temporary files it has the form: `/tmp/index-PATH-XXXXXX.vtmsu`.
@@ -205,6 +205,12 @@ function! s:WriteTags()
 	echo map(l:lines, 's:ApplyTagsOfLine(v:val)')
 endfunction
 
+" Same as `s:WriteTags` but for use in an Ex-Command.
+function! s:WriteTagsEx(start, stop) 
+	let l:lines = range(a:start, a:stop)
+	echo map(l:lines, 's:ApplyTagsOfLine(v:val)')
+endfunction
+
 " Gets the tags and correct names of the line `a:linenum`
 " and calls `s:TagFile()`.
 function! s:ApplyTagsOfLine(linenum) 
@@ -248,7 +254,8 @@ endfunction
 " = Ex Commands =
 " ===============
 
-command! -nargs=? VTLoad :call s:LoadFiles(<q-args>)
+command! -nargs=? VTLoad	:call s:LoadFiles(<q-args>)
+command! -range VTWrite	:call s:WriteTagsEx(<line1>,<line2>)
 
 " ================
 " = Autocommands =
