@@ -1,6 +1,5 @@
 " File: vim-tmsu.vim
 " Author: René Michalke <rene@renemichalke.de>
-" Last Change: 2020 Jun 26
 " Description: A vim wrapper for tmsu.
 
 " disable loading of plugin
@@ -235,18 +234,30 @@ function! s:TagFile(file, tags)
 
 endfunction
 
+" ================
+" = AUTOCOMMANDS =
+" ================
+
 function! s:DeleteTemporaryFile()
 	echom "removing". s:tmpfile
 	let	l:res = system("rm ".shellescape(s:tmpfile, "A"))
 endfunction
 
-" ================
-" = AUTOCOMMANDS =
-" ================
-
 augroup vim_tmsu_wrapper
 	autocmd!
+	
+	" delete temporary file
 	autocmd BufWinLeave /tmp/index*.vtmsu execute "call s:DeleteTemporaryFile()"
+	
+	" buffer local mapping for: open file on current line with xdg-open
+	if !hasmapto('<Plug>VimtmsuOpenFile')
+		autocmd Filetype vtmsu nmap <buffer> gx	<Plug>VimtmsuOpenFile
+	endif
+	
+	" buffer local mapping for: reimplementation of `gf`
+	if !hasmapto('<Plug>VimtmsuGoFile')
+		autocmd Filetype vtmsu nmap <buffer> gf	<Plug>VimtmsuGoFile
+	endif
 augroup END
 
 " ============
@@ -254,6 +265,12 @@ augroup END
 " ============
 
 if exists("g:vimtmsu_loaded_mappings") == v:false
+	
+	noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
+	noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
+	
+	noremap <unique> <script> <Plug>VimtmsuGoFile		<SID>Go
+	noremap <SID>Go		:<c-u> call <SID>GoFile()<CR>
 
 	" load home directory in current window
 	if !hasmapto('<Plug>VimtmsuLoadHome')
@@ -290,24 +307,9 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 	noremap <unique> <script> <Plug>VimtmsuWriteTags		<SID>Write
 	noremap <SID>Write		:<c-u> call <SID>WriteTags()<CR>
 
-	" open file on current line with xdg-open
-	if !hasmapto('<Plug>VimtmsuOpenFile')
-		nmap <unique> gx	<Plug>VimtmsuOpenFile
-	endif
-	noremap <unique> <script> <Plug>VimtmsuOpenFile		<SID>Open
-	noremap <SID>Open		:<c-u> call <SID>OpenFile()<CR>
-	
-	" reimplementation of `gf`
-	if !hasmapto('<Plug>VimtmsuGoFile')
-		nmap <unique> gf	<Plug>VimtmsuGoFile
-	endif
-	noremap <unique> <script> <Plug>VimtmsuGoFile		<SID>Go
-	noremap <SID>Go		:<c-u> call <SID>GoFile()<CR>
-
-	let g:vimtmsu_loaded_mappings = 1
+let g:vimtmsu_loaded_mappings = 1
 
 endif
-	
 
 " restore user's options
 let &cpo = s:save_cpo
