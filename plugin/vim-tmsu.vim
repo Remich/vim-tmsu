@@ -43,11 +43,10 @@ endfunction
 
 " Calls the file loader (`src/loader.sh`) using Neovim's Job Control.
 " Decides where to create the file the data gets written to.
-" Opens that file in the current window or a vertical split, depending on
-" the parameter `a:split`.
-function! s:LoadFiles(split, path)
+" Opens that file in the current window.
+function! s:LoadFiles(path)
 	
-	call s:Message("LoadFiles(".a:split.", ".a:path.")")	
+	call s:Message("LoadFiles(".a:path.")")	
 
 	" Sanitize `a:path`:
 
@@ -59,11 +58,6 @@ function! s:LoadFiles(split, path)
 		let l:path = getcwd()
 	endif
 	
-	" Should i stay or should i split?
-	if(a:split == "vsplit")	
-		vsplit
-	endif
-
 	" Check if we should use a persistent index file or a temporary file.
 	if g:vimtmsu_persistent_index_files == 0
 		" Generate filename based on the path we are indexing.
@@ -254,7 +248,7 @@ endfunction
 " = Ex Commands =
 " ===============
 
-command! -nargs=? VTLoad :call s:LoadFiles("stay", <q-args>)
+command! -nargs=? VTLoad :call s:LoadFiles(<q-args>)
 
 " ================
 " = Autocommands =
@@ -300,14 +294,7 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 		nmap <unique> <Leader>t.	<Plug>VimtmsuLoadCwd
 	endif
 	noremap <unique> <script> <Plug>VimtmsuLoadCwd		<SID>Cwd
-	noremap <SID>Cwd		:<c-u> call <SID>LoadFiles("stay", getcwd())<CR>
-
-	" Load current working directory in a vertical split.
-	if !hasmapto('<Plug>VimtmsuLoadCwdVsplit')
-		nmap <unique> <Leader>tv.	<Plug>VimtmsuLoadCwdVsplit
-	endif
-	noremap <unique> <script> <Plug>VimtmsuLoadCwdVsplit		<SID>CwdVsplit
-	noremap <SID>CwdVsplit		:<c-u> call <SID>LoadFiles("vsplit", getcwd())<CR>
+	noremap <SID>Cwd		:<c-u> call <SID>LoadFiles(getcwd())<CR>
 
 	" Write changes of selected lines to tmsu database.
 	if !hasmapto('<Plug>VimtmsuWriteTags')
