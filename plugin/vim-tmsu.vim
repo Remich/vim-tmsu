@@ -195,10 +195,12 @@ endfunction
 " function to apply tags to file in line
 function! s:TagFile(file, tags)
 	
-	if(a:path == "" || a:filename == "")
-		echom "ERROR: path or filename missing as argument in `s:TagFile()`."
+	if a:file == ""
+		echom "ERROR: a:file missing as argument in `s:TagFile()`."
 		return
 	endif
+
+	let l:file = shellescape(a:file, "A")
 
 	" create argument string for tags
 	if a:tags == []
@@ -208,14 +210,14 @@ function! s:TagFile(file, tags)
 		let l:tags = join(a:tags)
 	endif
 
-	echom "Tagging(" . a:file . ", " . l:tags . ");"
+	echom "Tagging(" . l:file . ", " . l:tags . ");"
 
 	" always clearing
-	execute "! tmsu untag --all " . a:file
+	execute "! tmsu untag --all " . l:file
 
 	" tagging
 	if(l:tags != "") " not necessary, if no tags
-		execute "! tmsu tag --tags='".l:tags."' ".a:file
+		execute "! tmsu tag --tags='".l:tags."' ".l:file
 	endif
 
 endfunction
