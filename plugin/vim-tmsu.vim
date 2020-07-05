@@ -37,12 +37,23 @@ let s:filename = ""
 " Initialize path to the file loader script.
 let s:loader = g:vimtmsu_plugin_dir.'/vim-tmsu/src/loader.sh'
 
+" Writes a message.
+function! s:Message(msg)
+	echom "vim-tmsu: ".a:msg
+endfunction
+
+" Writes a error message.
+function! s:Error(msg)
+	echom "vim-tmsu: ERROR: ".a:msg
+endfunction
 
 " Calls the file loader (`src/loader.sh`) using Neovim's Job Control.
 " Decides where to create the file the data gets loaded into.
 " Opens that file in the current window or a vertical split, depending on
 " `a:split`.
 function! s:LoadFiles(split, path)
+
+	call s:Message("LoadFiles(".a:split.", ".a:path.")")	
 	
 	" Should i stay or should i split?
 	if(a:split == "vsplit")	
@@ -90,6 +101,7 @@ function! s:LoadFiles(split, path)
 				\ }
 	
 	" Call the loader, which populates the file.
+	call s:Message("LoadFiles: Starting job.")	
 	let job1 = jobstart(['bash', '-c', l:argstr], extend({'shell': 'shell 1'}, s:callbacks))
 	
 	return
@@ -121,7 +133,7 @@ endfunction
 function! s:OpenFile()
 	let l:linenum = getpos('.')[1]
 	let l:file    = s:GetFullFilename(l:linenum)
-	echom "Opening file: ".l:file
+	call s:Message("Opening File: ".l:file."")	
 	execute ":! xdg-open " . shellescape(l:file, "A")
 endfunction
 
@@ -129,7 +141,7 @@ endfunction
 function! s:GoFile()
 	let l:linenum = getpos('.')[1]
 	let l:file    = s:GetFullFilename(l:linenum)
-	echom "Going file: ".l:file
+	call s:Message("Going File: ".l:file."")	
 	execute "edit! " . l:file
 endfunction
 
@@ -146,7 +158,7 @@ function! s:GetPathLineNum(linenum)
 		let l:line = getline(l:curlinenum)
 
 		if l:curlinenum == 0
-			echom "ERROR: Missing Path. Reload the index file!"
+			call s:Error("GetPathLineNum: Missing Path. Reload the index file!")	
 			return 2
 		endif
 		
@@ -207,7 +219,7 @@ endfunction
 function! s:TagFile(file, tags)
 	
 	if a:file == ""
-		echom "ERROR: a:file missing as argument in `s:TagFile()`."
+		call s:Error("a:file missing as argument in 'TagFile()'.")
 		return
 	endif
 
@@ -221,7 +233,7 @@ function! s:TagFile(file, tags)
 		let l:tags = join(a:tags)
 	endif
 
-	echom "Tagging(" . l:file . ", " . l:tags . ");"
+	call s:Message("Tagging(" . l:file . ", " . l:tags . ")")
 
 	" Always remove all previous tags.
 	execute "! tmsu untag --all " . l:file
@@ -239,7 +251,7 @@ endfunction
 
 " Deletes the temporary file.
 function! s:DeleteTemporaryFile()
-	echom "removing". s:filename
+	call s:Message("Removing ".s:filename)
 	let	l:res = system("rm ".shellescape(s:filename, "A"))
 endfunction
 
