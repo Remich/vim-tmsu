@@ -2,6 +2,8 @@
 
 A Neovim Plugin which provides a convenient and efficient way to organize your files with tags using the awesome command-line tool [TMSU](https://tmsu.org/).  
 
+![](screenshot.png)
+
 ## Introduction
 
 This plugin creates a list of files and directories with their respective TMSU tags and writes that list into a file, the so called 'index-file'.  
