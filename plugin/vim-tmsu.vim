@@ -1,6 +1,6 @@
 " File: vim-tmsu.vim
 " Author: René Michalke <rene@renemichalke.de>
-" Description: A vim wrapper for tmsu.
+" Description: A Vim wrapper for TMSU.
 
 " Disable loading of plugin.
 if exists("g:vimtmsu_load") && g:vimtmsu_load == 0
@@ -303,7 +303,7 @@ if exists("g:vimtmsu_loaded_mappings") == v:false
 	noremap <unique> <script> <Plug>VimtmsuLoadCwd		<SID>Cwd
 	noremap <SID>Cwd		:<c-u> call <SID>LoadFiles(getcwd())<CR>
 
-	" Write changes of selected lines to tmsu database.
+	" Write changes of selected lines to TMSU database.
 	if !hasmapto('<Plug>VimtmsuWriteTags')
 		vmap <unique> <Leader>tw	<Plug>VimtmsuWriteTags
 	endif

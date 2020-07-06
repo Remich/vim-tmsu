@@ -2,7 +2,7 @@
 
 # File: loader.sh
 # Author: René Michalke <rene@renemichalke.de>
-# Description: Loads recursively all files and directories with their tmsu tags into a .vtmsu file.
+# Description: Loads recursively all files and directories with their TMSU tags into a .vtmsu file.
 
 # Check for correct number of arguments.
 if [[ $# -ne 3 ]]; then
