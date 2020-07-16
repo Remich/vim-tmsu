@@ -244,7 +244,7 @@ function! s:TagFile(file, tags)
 
 	" Actual tagging. Don't if no tags.
 	if(l:tags != "")
-		execute "! tmsu tag --tags='".l:tags."' ".l:file
+		execute '! tmsu tag --tags="'.l:tags.'" '.l:file
 	endif
 
 endfunction
